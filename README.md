@@ -6,7 +6,7 @@ Built with a **zero-cost** stack: all services have free tiers and **no credit c
 
 ![Stack](https://img.shields.io/badge/stack-TypeScript%20%2B%20React%20%2B%20Next.js%20%2B%20MCP%20%2B%20AI%20SDK-7c5cff)
 
-> **📚 Documentação completa:** este README é um resumo. Para o guia completo e didático de toda a implementação — incluindo como construir o **seu próprio agente** — veja [`docs/pt.md`](./docs/pt.md) (português) ou [`docs/en.md`](./docs/en.md) (inglês).
+> **📚 Full documentation:** this README is a summary. For the complete, didactic guide to the entire implementation — including how to build **your own agent** — see [`docs/pt.md`](./docs/pt.md) (Portuguese) or [`docs/en.md`](./docs/en.md) (English).
 
 ---
 
