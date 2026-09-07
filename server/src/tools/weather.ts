@@ -3,6 +3,7 @@ import * as z from 'zod/v4'
 
 const GEOCODING_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 const FORECAST_URL = 'https://api.open-meteo.com/v1/forecast'
+const FALLBACK_FORECAST_URL = 'https://wttr.in'
 
 const WEATHER_CODES: Record<number, string> = {
   0: 'Clear sky',
@@ -119,22 +120,11 @@ const fetchWeather = async (
       .filter(Boolean)
       .join(', ')
 
-    const forecastParams = new URLSearchParams({
-      latitude: String(match.latitude),
-      longitude: String(match.longitude),
-      current:
-        'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
-    })
-    const forecastRes = await fetch(`${FORECAST_URL}?${forecastParams}`, {
-      headers: { 'User-Agent': 'mcp-agent-demo/1.0' },
-    })
+    const forecast = await fetchForecast(match.latitude, match.longitude)
 
-    if (!forecastRes.ok)
-      return `ERROR Weather forecast failed (HTTP ${forecastRes.status}).`
-
-    const forecast = (await forecastRes.json()) as WeatherJson
     const c = forecast.current
-    const condition = WEATHER_CODES[c.weather_code] ?? `Code ${c.weather_code}`
+    const condition =
+      c.condition ?? WEATHER_CODES[c.weather_code] ?? `Code ${c.weather_code}`
 
     return [
       `Current weather in ${location}:`,
@@ -145,5 +135,95 @@ const fetchWeather = async (
     ].join('\n')
   } catch (err) {
     return `ERROR Weather request failed: ${(err as Error).message}`
+  }
+}
+
+interface Forecast {
+  current: {
+    temperature_2m: number
+    relative_humidity_2m: number
+    apparent_temperature: number
+    weather_code: number
+    wind_speed_10m: number
+    condition?: string
+  }
+}
+
+const fetchForecast = async (
+  latitude: number,
+  longitude: number,
+): Promise<Forecast> => {
+  const openMeteo = await fetchOpenMeteoForecast(latitude, longitude)
+  if (openMeteo) return openMeteo
+  const wttrIn = await fetchWttrInForecast(latitude, longitude)
+  if (wttrIn) return wttrIn
+  throw new Error('All weather forecast providers failed.')
+}
+
+const fetchOpenMeteoForecast = async (
+  latitude: number,
+  longitude: number,
+): Promise<Forecast | null> => {
+  try {
+    const forecastParams = new URLSearchParams({
+      latitude: String(latitude),
+      longitude: String(longitude),
+      current:
+        'temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m',
+    })
+    const forecastRes = await fetch(`${FORECAST_URL}?${forecastParams}`, {
+      headers: { 'User-Agent': 'mcp-agent-demo/1.0' },
+    })
+
+    if (!forecastRes.ok) return null
+    const forecast = (await forecastRes.json()) as WeatherJson
+    return {
+      current: {
+        temperature_2m: forecast.current.temperature_2m,
+        relative_humidity_2m: forecast.current.relative_humidity_2m,
+        apparent_temperature: forecast.current.apparent_temperature,
+        weather_code: forecast.current.weather_code,
+        wind_speed_10m: forecast.current.wind_speed_10m,
+      },
+    }
+  } catch {
+    return null
+  }
+}
+
+const fetchWttrInForecast = async (
+  latitude: number,
+  longitude: number,
+): Promise<Forecast | null> => {
+  try {
+    const res = await fetch(
+      `${FALLBACK_FORECAST_URL}/${latitude},${longitude}?format=j1`,
+      { headers: { 'User-Agent': 'mcp-agent-demo/1.0' } },
+    )
+    if (!res.ok) return null
+    const json = (await res.json()) as {
+      current_condition: Array<{
+        temp_C: string
+        FeelsLikeC: string
+        humidity: string
+        windspeedKmph: string
+        weatherCode: string
+        weatherDesc: Array<{ value: string }>
+      }>
+    }
+    const c = json.current_condition[0]
+    if (!c) return null
+    return {
+      current: {
+        temperature_2m: Number(c.temp_C),
+        relative_humidity_2m: Number(c.humidity),
+        apparent_temperature: Number(c.FeelsLikeC),
+        weather_code: Number(c.weatherCode),
+        wind_speed_10m: Math.round(Number(c.windspeedKmph) * 0.277778),
+        condition: c.weatherDesc[0]?.value,
+      },
+    }
+  } catch {
+    return null
   }
 }
