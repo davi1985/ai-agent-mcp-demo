@@ -67,10 +67,10 @@ Opens the MCP server on port **3000** and the frontend on port **3001**.
 
 ```bash
 # Terminal 1 — MCP server
-cd server && npm install && npm run dev     # http://localhost:3000/mcp
+cd server && yarn && yarn dev         # http://localhost:3000/mcp
 
 # Terminal 2 — Frontend
-cd web && npm install && npm run dev        # http://localhost:3001
+cd web && yarn && yarn dev            # http://localhost:3001
 ```
 
 ### Groq API key setup
@@ -88,7 +88,7 @@ The default model is `qwen/qwen3.8-27b`. You can change it via the `MODEL` envir
 ### MCP server → Render (free)
 
 1. Push this repo to GitHub.
-2. **Render → New → Web Service**, connect the repo, root directory `server`, build command `npm install && npm run build`, start command `npm start`.
+2. **Render → New → Web Service**, connect the repo, root directory `server`, build command `yarn && yarn build`, start command `yarn start`.
 3. Add environment variable: `ALLOWED_HOSTS=<your-subdomain>.onrender.com`.
 4. The free tier sleeps after ~15 min of inactivity — the frontend handles this automatically.
 
