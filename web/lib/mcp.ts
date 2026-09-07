@@ -61,7 +61,11 @@ export const buildToolSet = async (client: Client): Promise<ToolSet> => {
             .join('\n')
 
           if (result.isError)
-            throw new Error(text || `Tool ${mcpTool.name} failed.`)
+            return {
+              type: 'tool-result',
+              output: text || `Tool ${mcpTool.name} failed.`,
+              isError: true,
+            }
 
           return text
         },

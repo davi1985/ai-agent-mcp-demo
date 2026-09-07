@@ -105,12 +105,43 @@ const fetchWeather = async (
         .replace(/[\u0300-\u036f]/g, '')
         .toLowerCase()
 
+    const normalizeCountry = (s?: string) =>
+      normalize(s ?? '').replace(
+        /^(brasil|espanha|alemanha|franca|italia|estados unidos|eua|japao|reino unido|inglaterra|portugal|canada|mexico|argentina|chile|colombia|venezuela|peru|bolivia|paraguai|uruguai|equador)$/,
+        (m) =>
+          ({
+            brasil: 'brazil',
+            espanha: 'spain',
+            alemanha: 'germany',
+            franca: 'france',
+            italia: 'italy',
+            'estados unidos': 'united states',
+            eua: 'united states',
+            japao: 'japan',
+            'reino unido': 'united kingdom',
+            inglaterra: 'united kingdom',
+            portugal: 'portugal',
+            canada: 'canada',
+            mexico: 'mexico',
+            argentina: 'argentina',
+            chile: 'chile',
+            colombia: 'colombia',
+            venezuela: 'venezuela',
+            peru: 'peru',
+            bolivia: 'bolivia',
+            paraguai: 'paraguay',
+            uruguai: 'uruguay',
+            equador: 'ecuador',
+          })[m] ?? m,
+      )
+
     const requested = normalize(city)
 
     const match = results.find(
       (r) =>
         normalize(r.name) === requested &&
-        (!country || r.country?.toLowerCase().includes(country.toLowerCase())),
+        (!country ||
+          normalizeCountry(r.country) === normalizeCountry(country)),
     )
 
     if (!match)
