@@ -10,7 +10,7 @@ export const registerCalculateTool = (server: McpServer): void => {
     'calculate',
     {
       description:
-        'Evaluate a mathematical expression safely and return the numeric result. Supports +, -, *, /, ^, parentheses, percentages and functions like sqrt, log, sin, cos, tan, abs, round, floor, ceil. Use this for any arithmetic the user asks about.',
+        'Evaluate a mathematical expression safely and return the numeric result. Supports +, -, *, /, ^, parentheses, percentages and functions like sqrt, log, sin, cos, tan, abs, round, floor, ceil. Use this only for computations the user asks to evaluate; do not use it for well-known constants or facts (e.g. pi).',
       inputSchema: z.object({
         expression: z
           .string()
