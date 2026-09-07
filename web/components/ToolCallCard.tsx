@@ -1,5 +1,15 @@
 'use client'
 
+import type { ComponentType, SVGProps } from 'react'
+import {
+  CalculatorIcon,
+  CheckIcon,
+  CloudSunIcon,
+  SearchIcon,
+  SpinnerIcon,
+  UserIcon,
+} from './Icons'
+
 type ToolPartState =
   | 'input-streaming'
   | 'input-available'
@@ -24,6 +34,13 @@ const TOOL_LABELS: Record<string, string> = {
   get_github_user: 'GitHub profile',
 }
 
+const TOOL_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  get_weather: CloudSunIcon,
+  web_search: SearchIcon,
+  calculate: CalculatorIcon,
+  get_github_user: UserIcon,
+}
+
 export const ToolCallCard = ({
   toolName,
   state,
@@ -33,16 +50,26 @@ export const ToolCallCard = ({
 }: ToolCallCardProps) => {
   const pending = state === 'input-streaming' || state === 'input-available'
   const label = TOOL_LABELS[toolName] ?? toolName
+  const ToolIcon = TOOL_ICONS[toolName] ?? null
 
   return (
     <div
       className={`tool-card ${pending ? 'tool-card-pending' : ''} ${state === 'output-error' ? 'tool-card-error' : ''}`}
     >
       <div className="tool-card-head">
+        {ToolIcon && (
+          <span className="tool-icon">
+            <ToolIcon />
+          </span>
+        )}
         {pending ? (
-          <span className="tool-spinner" />
+          <span className="tool-spinner">
+            <SpinnerIcon />
+          </span>
         ) : (
-          <span className="tool-check">✓</span>
+          <span className="tool-check">
+            <CheckIcon />
+          </span>
         )}
         <span className="tool-name">{label}</span>
         {input != null && Object.keys(input as object).length > 0 && (

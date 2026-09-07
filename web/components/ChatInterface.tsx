@@ -5,21 +5,34 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
 import { ServerStatus } from './ServerStatus'
 import { ToolCallCard } from './ToolCallCard'
+import {
+  CalculatorIcon,
+  CloudSunIcon,
+  SearchIcon,
+  SendIcon,
+  SpinnerIcon,
+  StopIcon,
+  UserIcon,
+} from './Icons'
 
 const STARTERS = [
   {
-    icon: '🌤️',
+    icon: CloudSunIcon,
     label: 'Weather in Tokyo',
     text: 'What is the weather in Tokyo right now?',
   },
   {
-    icon: '🔎',
+    icon: SearchIcon,
     label: 'Search the web',
     text: 'Search the web: who created Vercel?',
   },
-  { icon: '🧮', label: 'Math', text: 'Calculate: (15% of 4,800) + 120' },
   {
-    icon: '👤',
+    icon: CalculatorIcon,
+    label: 'Math',
+    text: 'Calculate: (15% of 4,800) + 120',
+  },
+  {
+    icon: UserIcon,
     label: 'GitHub profile',
     text: 'Show the GitHub profile of openai',
   },
@@ -91,14 +104,21 @@ export const ChatInterface = () => {
   })
 
   const [input, setInput] = useState('')
+  const [sending, setSending] = useState(false)
   const streaming = status === 'submitted' || status === 'streaming'
+  const busy = sending || streaming
   const showStarters = messages.length === 0
 
   const submit = async (text: string) => {
     const value = text.trim()
-    if (!value || streaming) return
+    if (!value || busy) return
     setInput('')
-    await sendMessage({ text: value })
+    setSending(true)
+    try {
+      await sendMessage({ text: value })
+    } finally {
+      setSending(false)
+    }
   }
 
   return (
@@ -121,15 +141,19 @@ export const ChatInterface = () => {
           <div className="starters">
             <p className="starters-hint">Try one of these:</p>
             <div className="starters-grid">
-              {STARTERS.map((s) => (
-                <button
-                  key={s.label}
-                  className="starter-chip"
-                  onClick={() => void submit(s.text)}
-                >
-                  <span>{s.icon}</span> {s.label}
-                </button>
-              ))}
+              {STARTERS.map((s) => {
+                const Icon = s.icon
+                return (
+                  <button
+                    key={s.label}
+                    className="starter-chip"
+                    onClick={() => void submit(s.text)}
+                  >
+                    <Icon className="starter-icon" />
+                    {s.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -142,7 +166,7 @@ export const ChatInterface = () => {
             <div className="bubble">
               {message.parts.map((part, i) => renderPart(part, i))}
               {message.role === 'assistant' &&
-                streaming &&
+                busy &&
                 message.id === messages[messages.length - 1].id && (
                   <span className="typing-caret" />
                 )}
@@ -174,16 +198,19 @@ export const ChatInterface = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Ask about weather, math, GitHub profiles, or the web…"
-            disabled={streaming}
+            disabled={busy}
             autoFocus
           />
-          {streaming ? (
+          {busy ? (
             <button
               type="button"
               className="send-button stop"
               onClick={() => stop()}
             >
-              ■ Stop
+              <span className="btn-icon">
+                <SpinnerIcon />
+              </span>
+              Stop
             </button>
           ) : (
             <button
@@ -192,6 +219,9 @@ export const ChatInterface = () => {
               disabled={!input.trim()}
             >
               Send
+              <span className="btn-icon">
+                <SendIcon />
+              </span>
             </button>
           )}
         </form>
