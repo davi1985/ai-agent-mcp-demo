@@ -27,7 +27,7 @@ interface RepoJson {
   html_url: string
 }
 
-export function registerGithubTool(server: McpServer): void {
+export const registerGithubTool = (server: McpServer): void => {
   server.registerTool(
     'get_github_user',
     {
@@ -50,9 +50,9 @@ export function registerGithubTool(server: McpServer): void {
   )
 }
 
-async function fetchJson<T>(
+const fetchJson = async <T>(
   url: string,
-): Promise<{ ok: boolean; status: number; data?: T }> {
+): Promise<{ ok: boolean; status: number; data?: T }> => {
   const res = await fetch(url, {
     headers: {
       Accept: 'application/vnd.github+json',
@@ -64,7 +64,7 @@ async function fetchJson<T>(
   return { ok: true, status: res.status, data: (await res.json()) as T }
 }
 
-async function fetchGithubUser(username: string): Promise<string> {
+const fetchGithubUser = async (username: string): Promise<string> => {
   try {
     const user = await fetchJson<UserJson>(
       `${GITHUB_API}/users/${encodeURIComponent(username)}`,
