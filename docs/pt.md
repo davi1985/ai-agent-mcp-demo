@@ -1,8 +1,8 @@
 # Documentação Completa — Projeto `ai-agent-mcp-demo`
 
-Um guia didático e completo sobre como este projeto funciona, pensado para um desenvolvedor que quer **entender 100%** da implementação e, a partir daqui, criar o **seu próprio agente de IA**.
+Um guia completo sobre como este projeto funciona, para um desenvolvedor que quer entender toda a implementação e, a partir daqui, criar o próprio agente de IA.
 
-> Se você usa o **Claude Code** como ferramenta de trabalho (planejar features, corrigir bugs), este documento serve de ponte: ele usa a mesma família de conceitos ("agente", "ferramentas", "prompts") que você já vê no dia a dia, mas agora explica como eles são **construídos do zero num código**.
+> Se você usa o **Claude Code** como ferramenta de trabalho (planejar features, corrigir bugs), este documento liga os dois mundos: ele usa os mesmos conceitos ("agente", "ferramentas", "prompts") do seu dia a dia, mas explica como eles são construídos do zero em código.
 
 ---
 
@@ -34,20 +34,20 @@ Um guia didático e completo sobre como este projeto funciona, pensado para um d
 
 ## 1. O que este projeto é
 
-**Em uma frase:** é um **chat** onde o usuário faz perguntas em linguagem natural (clima, matemática, perfil do GitHub, pesquisa na web) e um **modelo de IA** responde **chamando ferramentas reais em tempo real**, cujo resultado aparece ao vivo na interface.
+**Em uma frase:** é um **chat** onde o usuário faz perguntas em linguagem natural (clima, matemática, perfil do GitHub, pesquisa na web) e um **modelo de IA** responde **chamando ferramentas reais em tempo real**, com o resultado aparecendo ao vivo na interface.
 
-**Em mais detalhes:** a IA não tem o conhecimento do clima nem dos repositórios do GitHub "na cabeça". Ela tem acesso a **ferramentas** (funções que buscam dados reais) e decide, a cada pergunta, **qual ferramenta chamar e com quais argumentos**. Esse é o coração de um **agente**: um modelo que **age** (chama funções), não só que **fala** (gera texto).
+**Em mais detalhes:** a IA não tem o conhecimento do clima nem dos repositórios do GitHub "na cabeça". Ela tem acesso a **ferramentas** (funções que buscam dados reais) e decide, a cada pergunta, **qual ferramenta chamar e com quais argumentos**. Isso define um **agente**: um modelo que **age** (chama funções) e não só **fala** (gera texto).
 
-O projeto foi feito com um requisito forte: **custo zero** (todos os serviços têm plano grátis, sem cartão de crédito). Isso influenciou cada escolha de tecnologia.
+O projeto foi feito com um requisito claro: **custo zero** (todos os serviços têm plano grátis, sem cartão de crédito). Isso influenciou cada escolha de tecnologia.
 
 ---
 
 ## 2. Conceitos fundamentais
 
-Para um dev novo em agentes, estes são os conceitos que destravam toda a leitura do código:
+Para um dev novo em agentes, estes são os conceitos que aparecem antes de qualquer código:
 
 ### 2.1 Modelo de linguagem (LLM)
-O "cérebro" que entende texto e gera texto. Ele **não tem acesso a dados reais do mundo** por si só — só conversa. Neste projeto é o **Groq** (`qwen/qwen3.8-27b`).
+O modelo que entende e gera texto. Ele **não tem acesso a dados reais do mundo** por conta própria, só conversa. Neste projeto é o **Groq** (`qwen/qwen3.8-27b`).
 
 ### 2.2 Ferramenta (Tool)
 Uma função com **nome, descrição e um esquema de entrada (schema)**. O modelo lê essas descrições e "decide" chamar a ferramenta quando achar necessário. Ex.: `get_weather(city)`.
@@ -56,9 +56,9 @@ Uma função com **nome, descrição e um esquema de entrada (schema)**. O model
 É o mecanismo pelo qual o LLM, durante a geração da resposta, emite uma chamada estruturada do tipo `{ tool: "get_weather", args: { city: "Tokyo" } }`. O código executa a função real, pega o resultado e devolve ao modelo, que então escreve a resposta final **baseada** nesse resultado.
 
 ### 2.4 MCP — Model Context Protocol
-É o **protocolo** (um padrão aberto, da Anthropic — os criadores do Claude) que padroniza como um agente **descobre e chama ferramentas** fornecidas por um **servidor externo**. É como um "USB de ferramentas": um servidor MCP expõe ferramentas; qualquer cliente MCP pode usá-las.
+É o **protocolo** (um padrão aberto, da Anthropic, a empresa do Claude) que padroniza como um agente **descobre e chama ferramentas** fornecidas por um **servidor externo**. Funciona como um "USB de ferramentas": um servidor MCP expõe ferramentas; qualquer cliente MCP pode usá-las.
 
-A grande vantagem do MCP aqui: **as ferramentas não são hardcoded no frontend**. O cliente pede a lista de ferramentas ao servidor em tempo de execução (`tools/list`) e constrói os executores em cima disso. Se amanhã você adicionar uma ferramenta nova no servidor, o frontend a usa automaticamente, sem mexer nele.
+A vantagem do MCP aqui: **as ferramentas não são hardcoded no frontend**. O cliente pede a lista de ferramentas ao servidor em tempo de execução (`tools/list`) e constrói os executores em cima disso. Se amanhã você adicionar uma ferramenta nova no servidor, o frontend a usa automaticamente, sem mexer nele.
 
 ### 2.5 AI SDK (Vercel)
 Uma biblioteca (da Vercel) que unifica o acesso a vários provedores de LLM (OpenAI, Anthropic, Groq etc.) com uma API comum. Aqui usamos:
@@ -67,7 +67,7 @@ Uma biblioteca (da Vercel) que unifica o acesso a vários provedores de LLM (Ope
 - **`@ai-sdk/openai-compatible`** — adaptador para serviços compatíveis com a API da OpenAI (é o caso do Groq).
 
 ### 2.6 Streaming
-Em vez de esperar a resposta inteira pronta, o servidor vai enviando os "pedaços" assim que são gerados. Isso dá a sensação de digitação em tempo real e, durante tool calls, permite mostrar spinners.
+Em vez de esperar a resposta inteira pronta, o servidor envia os "pedaços" assim que são gerados. Isso dá a sensação de digitação em tempo real e, durante tool calls, permite mostrar spinners.
 
 ### 2.7 Transporte Streamable HTTP
 É o jeito de dois processos falarem MCP pela rede usando HTTP (+ streaming por SSE/event stream). O servidor expõe o endpoint `/mcp`; o cliente se conecta a ele.
@@ -105,7 +105,7 @@ O projeto tem **duas aplicações independentes** + um script que as sobe juntas
 
 ## 4. Fluxo de uma mensagem
 
-Vamos seguir uma pergunta real, tipo *"What's the weather in Tokyo?"*:
+Seguimos uma pergunta real, tipo *"What's the weather in Tokyo?"*:
 
 1. **Usuário digita** no campo de entrada do navegador.
 2. O hook `useChat` (frontend) envia a pergunta para `POST /api/agent`.
@@ -132,7 +132,7 @@ Localização: `server/src/index.ts`.
 
 1. **Lê configurações de ambiente**: `MCP_SERVER_NAME` (nome exposto), `PORT` (default 3000), `ALLOWED_HOSTS`.
 
-2. **`buildServer()`** — cria a instância `McpServer` (do pacote `@modelcontextprotocol/server`) e **registra as 4 ferramentas**. Este é o coração da extensibilidade: para adicionar uma ferramenta, basta criar um `registerXxxTool(server)` e chamá-lo aqui.
+2. **`buildServer()`** — cria a instância `McpServer` (do pacote `@modelcontextprotocol/server`) e **registra as 4 ferramentas**. É por aqui que você adiciona ferramentas: crie um `registerXxxTool(server)` e chame-o aqui.
 
 3. **`createMcpHandler(buildServer)`** — cria o handler que processa os requests do protocolo MCP (lista ferramentas, chama ferramentas).
 
@@ -148,7 +148,7 @@ Localização: `server/src/index.ts`.
 
 7. **`app.listen(PORT, ...)`** — sobe o servidor e loga no console o endpoint.
 
-8. **`SIGINT` handler** — fecha a sessão do handler MCP com elegância quando o processo recebe Ctrl+C.
+8. **`SIGINT` handler** — fecha a sessão do handler MCP de forma limpa quando o processo recebe Ctrl+C.
 
 **Nota sobre `reqHostBase`:** função que monta a URL base pública (usa `PUBLIC_URL` se definido, senão `http://localhost:PORT`). Só é usada para montar o link de health no `GET /`.
 
@@ -169,11 +169,11 @@ server.registerTool(
 
 Três pontos importantes desse padrão:
 
-- **A `description` é o "manual do LLM"**. Quanto melhor ela indicar *quando usar*, melhor o modelo decide. O código capricha aqui (ex.: "Use this whenever the user asks about the weather").
+- **A `description` é o "manual do LLM"**. Quanto melhor ela indicar *quando usar*, melhor o modelo decide. O código capricha nisso (ex.: "Use this whenever the user asks about the weather").
 - **O `inputSchema` (Zod)** valida os argumentos que o modelo envia. O Zod também serve para o AI SDK e o MCP saberem a forma exata dos dados.
-- **O executor retorna um texto formatado** em vez de JSON bruto, porque é mais legível para o modelo incorporar na resposta final.
+- **O executor retorna um texto formatado** em vez de JSON bruto, porque texto legível é mais fácil para o modelo incorporar na resposta final.
 
-Um padrão consistente em todas as ferramentas para **erros**: se a função interna retorna uma string começando com `"ERROR"`, o executor a converte num **resultado de erro MCP** (`isError: true`), removendo o prefixo. Isso permite que o erro seja tratado e formatado sem quebrar o protocolo.
+Todas as ferramentas tratam **erros** do mesmo jeito: se a função interna retorna uma string começando com `"ERROR"`, o executor a converte num **resultado de erro MCP** (`isError: true`), removendo o prefixo. Isso permite que o erro seja tratado e formatado sem quebrar o protocolo.
 
 ### 5.3 Cada ferramenta em detalhe
 
@@ -202,7 +202,7 @@ Um padrão consistente em todas as ferramentas para **erros**: se a função int
 
 - **Cenário de uso:** "Quanto é (15% de 4.800) + 120?"
 - **Entrada:** `expression` (1–200 chars).
-- **Como funciona:** usa **`mathjs`** para avaliar a expressão, mas com **uma camada de segurança**: um `ALLOWED_CHARS` (regex) só permite números, operadores `+-*/^()` `%`, espaços, vírgula/ponto e letras minúsculas. Qualquer caractere fora disso é rejeitado **antes** de avaliar — isso impede injeção de código/expressões maliciosas. Também valida que o resultado é um número finito.
+- **Como funciona:** usa **`mathjs`** para avaliar a expressão, mas com **uma camada de segurança**: um `ALLOWED_CHARS` (regex) só permite números, operadores `+-*/^()` `%`, espaços, vírgula/ponto e letras minúsculas. Qualquer caractere fora disso é rejeitado **antes** de avaliar; isso impede injeção de código/expressões maliciosas. Também valida que o resultado é um número finito.
 - **Formatação:** inteiro vira string direto; decimal é arredondado para 6 casas.
 
 #### 5.3.4 `get_github_user` (`server/src/tools/github.ts`)
@@ -221,7 +221,7 @@ Este arquivo é a **camada MCP do lado do cliente**. Tem 3 funções:
 
 - **`connectMcp()`** — instancia o `Client` MCP (`@modelcontextprotocol/client`), cria um `StreamableHTTPClientTransport` apontando para `MCP_SERVER_URL` (default `http://localhost:3000/mcp`) e conecta. Lança erro se o servidor não estiver acessível (ex.: cold start do Render).
 - **`closeMcp()`** — encerra a sessão. Primeiro tenta `terminateSession()` (função específica do transporte) e depois `client.close()`, ambos com `catch` silencioso (best-effort).
-- **`buildToolSet(client)`** — a peça-chave da "descoberta dinâmica":
+- **`buildToolSet(client)`** — o núcleo da "descoberta dinâmica":
   1. Chama `client.listTools()`, que retorna as ferramentas do servidor MCP.
   2. Para cada ferramenta, monta uma entrada do **ToolSet do AI SDK**, com:
      - `description` (a do MCP, ou um fallback);
@@ -229,7 +229,7 @@ Este arquivo é a **camada MCP do lado do cliente**. Tem 3 funções:
      - `execute(args)` — chama `client.callTool()` no servidor MCP, extrai o texto dos blocos de conteúdo e, se `isError`, devolve um resultado de erro.
   3. Junta tudo num objeto `ToolSet` com `Object.fromEntries`.
 
-É graças a essa função que o frontend **não tem as ferramentas gravadas em código**: ele as descobre a cada request. Isso é a essência do MCP no projeto.
+É essa função que mantém o frontend **sem ferramentas gravadas em código**: ele as descobre a cada request. Esse é o ponto central do MCP no projeto.
 
 ### 6.2 `lib/prompts.ts`
 
@@ -239,11 +239,11 @@ Contém o **`SYSTEM_PROMPT`**, o "manual de instruções" do agente, que é envi
 - **quais ferramentas existem** e para que servem;
 - **regras de comportamento**: preferir ferramentas a adivinhar, chamar cada ferramenta no máximo 1x por passo, nunca inventar nomes/cidades/números/fatos, dizer quando algo não foi encontrado, responder no mesmo idioma do usuário, e manter as respostas **curtas (menos de 150 palavras, sem markdown/emoji)**.
 
-Esse prompt é o que mais molda o "comportamento" do agente — mexer nele é a forma mais rápida de mudar a personalidade/regras do bot.
+Esse prompt é o que mais molda o "comportamento" do agente: mexer nele é a forma mais rápida de mudar a personalidade e as regras do bot.
 
 ### 6.3 A API do agente — `app/api/agent/route.ts`
 
-Este é o "cérebro" do agente. É uma rota **POST** do App Router do Next.js. Vamos ver o que cada parte faz:
+Este é o "cérebro" do agente. É uma rota **POST** do App Router do Next.js. Veja o que cada parte faz:
 
 - **Metadados da rota (`runtime`, `dynamic`, `maxDuration`):** força Node.js runtime, garante que é renderizada a cada request (não cacheada), e limita 60s de execução.
 
@@ -325,7 +325,7 @@ Mostra cada invocação de ferramenta numa card:
 | `MCP_SERVER_URL` | `http://localhost:3000/mcp` | Endpoint MCP do servidor. |
 | `MODEL` | `qwen/qwen3.8-27b` | Modelo usado pelo Groq. |
 
-> **Importante:** o `GROQ_API_KEY` vive **apenas no servidor** (variável de ambiente do Next.js). Ele nunca é exposto ao navegador — isso é uma boa prática de segurança (ver [Seção 11](#11-segurança-e-boas-práticas)).
+> **Importante:** o `GROQ_API_KEY` vive **apenas no servidor** (variável de ambiente do Next.js). Ele nunca é exposto ao navegador; isso é uma boa prática de segurança (ver [Seção 11](#11-segurança-e-boas-práticas)).
 
 ---
 
@@ -359,7 +359,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 - **Testar o servidor MCP sozinho**: abra `http://localhost:3000/` (info) e `http://localhost:3000/health`. Você também pode usar um cliente MCP (ex.: extensão MCP Inspector) em `http://localhost:3000/mcp`.
 - **Logs do servidor**: o `console.error` no `listen` aparece no terminal do `server`.
 - **Testar a API do agente**: `curl http://localhost:3001/api/health` para o health.
-- **Ver os tool calls**: na UI, os `ToolCallCard` mostram argumentos e saídas — é o melhor jeito de ver o que o modelo decidiu.
+- **Ver os tool calls**: na UI, os `ToolCallCard` mostram argumentos e saídas; é o melhor jeito de ver o que o modelo decidiu.
 
 ---
 
@@ -369,7 +369,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 1. Suba o repositório para o GitHub.
 2. **Render → New → Web Service**, conecte o repo, **root directory** `server`, build `yarn && yarn build`, start `yarn start`.
 3. Adicione a env var `ALLOWED_HOSTS=<seu-subdominio>.onrender.com`.
-4. O free tier "dorme" após ~15 min de inatividade — o frontend lida com o wake-up automaticamente.
+4. O free tier "dorme" após ~15 min de inatividade; o frontend lida com o wake-up automaticamente.
 
 ### Frontend → Vercel (Hobby, grátis)
 1. **Vercel → Add New → Project**, conecte o repo, **root directory** `web`.
@@ -386,7 +386,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 | --- | --- |
 | **MCP para as ferramentas** | Padroniza descoberta/chamada de ferramentas; frontend não guarda tools hardcoded; extensível sem tocar no cliente. |
 | **Dois processos separados** (`server/` + `web/`) | Desacopla o "provedor de ferramentas" do "agente". O mesmo MCP server pode servir vários clientes/agentes. |
-| **Groq + `openai-compatible`** | Modelo rápido e **grátis**, e o Groq expõe uma API compatível com a OpenAI — o AI SDK já tem adaptador pronto. |
+| **Groq + `openai-compatible`** | Modelo rápido e **grátis**, e o Groq expõe uma API compatível com a OpenAI; o AI SDK já tem adaptador pronto. |
 | **AI SDK v7 (`streamText`)** | Abstrai provedores e gerencia tool calling + streaming com uma API só. |
 | **Descrições ricas nas tools** | O LLM decide pela descrição; descrições boas = decisões boas. É a "qualidade" do agente. |
 | **Zod para schemas** | Validação de entrada segura e declaração clara do formato, que também é convertida para JSON Schema consumido pelo MCP/AI SDK. |
@@ -401,7 +401,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 
 ## 11. Segurança e boas práticas
 
-1. **Nunca comitar segredos.** Note que `web/.env.local` **contém uma chave real do Groq** — está no `.gitignore`, mas vale a pena **rotacionar** (gerar nova no console do Groq) já que foi exibida. Sempre deixe apenas `.env.example` versionado.
+1. **Nunca comitar segredos.** Note que `web/.env.local` **contém uma chave real do Groq**; está no `.gitignore`, mas vale a pena **rotacionar** (gerar nova no console do Groq) já que foi exibida. Sempre deixe apenas `.env.example` versionado.
 2. **Segredos só no servidor.** A `GROQ_API_KEY` é lida via `process.env` no código do Next.js (server-side) e **não** é usada no client. Não exponha keys via variáveis `NEXT_PUBLIC_*`.
 3. **Validação de entrada.** O Zod valida os argumentos de toda ferramenta; o `calculate` ainda aplica uma regex whitelist para evitar injeção de código em `mathjs`.
 4. **Proteção contra DNS rebinding.** O `ALLOWED_HOSTS` restringe quais `Host` headers o servidor aceita. Ao publicar, atualize para incluir seu domínio real.
@@ -427,16 +427,16 @@ Copie a estrutura de pastas `server/` e `web/`. Instale as dependências com `ya
 3. Registre com `server.registerTool('minha_tool', { description, inputSchema }, handler)`.
 4. Importe e chame o `register` em `buildServer()` no `index.ts`.
 
-**Regra de ouro:** escreva a `description` como se estivesse instruindo alguém a usar — "Use this when the user asks about X". Isso define a precisão do seu agente. Defina o `inputSchema` com Zod com `min`/`max`/`.describe()` para clareza.
+**Regra de ouro:** escreva a `description` como se estivesse instruindo alguém a usar, no estilo "Use this when the user asks about X". Isso define a precisão do seu agente. Defina o `inputSchema` com Zod com `min`/`max`/`.describe()` para clareza.
 
 ### Etapa 3 — (Opcional) New tools aparecem sozinhas
-Como o frontend descobre ferramentas via `tools/list`, **suas novas ferramentas já funcionarão no chat sem mexer no frontend** (o `ToolCallCard` exibirá o nome cru se não estiver no mapa de rótulos — adicione lá se quiser um rótulo bonito).
+Como o frontend descobre ferramentas via `tools/list`, **suas novas ferramentas já funcionarão no chat sem mexer no frontend** (o `ToolCallCard` exibirá o nome cru se não estiver no mapa de rótulos; adicione lá se quiser um rótulo bonito).
 
 ### Etapa 4 — Ajuste o prompt do sistema
 Em `web/lib/prompts.ts`, liste suas ferramentas e defina as regras do seu agente (idioma, formato, limites, personalidade).
 
 ### Etapa 5 — Teste
-Rode `./dev.sh`, use os atalhos / converse, e observe os `ToolCallCard` para conferir quais ferramentas o modelo escolheu e com quais argumentos. Ajuste as `description` com base no comportamento observado — **prompt + descrições são o "tuning" do agente**.
+Rode `./dev.sh`, use os atalhos / converse, e observe os `ToolCallCard` para conferir quais ferramentas o modelo escolheu e com quais argumentos. Ajuste as `description` com base no comportamento observado; **prompt + descrições são o "tuning" do agente**.
 
 ### Etapa 6 — Troque/mude o modelo (opcional)
 Altere `MODEL` no `.env.local`, ou troque o provedor editando `createOpenAICompatible`/adaptador em `web/app/api/agent/route.ts` (o AI SDK suporta OpenAI, Anthropic, Google, etc.).
@@ -450,7 +450,7 @@ Altere `MODEL` no `.env.local`, ou troque o provedor editando `createOpenAICompa
 - **Persistência de conversa** (salvar mensagens em banco).
 - **Autenticação** (cada usuário tem sua sessão).
 - **Novas fontes de dados** (SQL, APIs pagas, webhooks).
-- **Ferramentas de escrita/ação** (criar arquivos, enviar e-mails, agendar) — sempre com **aprovação humana** para ações destrutivas.
+- **Ferramentas de escrita/ação** (criar arquivos, enviar e-mails, agendar); sempre com **aprovação humana** para ações destrutivas.
 - **Fila/retry** para rate limits do LLM.
 - **MCP clients múltiplos** (conectar a vários servidores MCP de uma vez).
 

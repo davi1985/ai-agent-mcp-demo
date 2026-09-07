@@ -1,8 +1,8 @@
 # Full Documentation — `ai-agent-mcp-demo` Project
 
-A complete, didactic guide to how this project works, written for a developer who wants to **understand 100%** of the implementation and, from here, build **their own AI agent**.
+A complete guide to how this project works, written for a developer who wants to understand the whole implementation and, from here, build **their own AI agent**.
 
-> If you use **Claude Code** as your day-to-day work tool (planning features, fixing bugs), this document bridges the gap: it uses the same family of concepts ("agent", "tools", "prompts") you already see daily, but now explains how they are **built from scratch in code**.
+> If you use **Claude Code** as your day-to-day work tool (planning features, fixing bugs), this document connects the two worlds: it uses the same concepts ("agent", "tools", "prompts") you already see daily, but explains how they are **built from scratch in code**.
 
 ---
 
@@ -36,7 +36,7 @@ A complete, didactic guide to how this project works, written for a developer wh
 
 **In one sentence:** it's a **chat** where the user asks questions in natural language (weather, math, GitHub profile, web search) and an **AI model** responds by **calling real tools in real time**, whose results appear live in the interface.
 
-**In more detail:** the AI doesn't have weather knowledge or GitHub repositories "in its head." It has access to **tools** (functions that fetch real data) and, for each question, decides **which tool to call and with which arguments**. This is the heart of an **agent**: a model that **acts** (calls functions), not just **talks** (generates text).
+**In more detail:** the AI doesn't have weather knowledge or GitHub repositories "in its head." It has access to **tools** (functions that fetch real data) and, for each question, decides **which tool to call and with which arguments**. That's what defines an **agent**: a model that **acts** (calls functions), not just **talks** (generates text).
 
 The project was built with a strong requirement: **zero cost** (all services have free tiers, no credit card). This influenced every technology choice.
 
@@ -44,10 +44,10 @@ The project was built with a strong requirement: **zero cost** (all services hav
 
 ## 2. Fundamental concepts
 
-For a developer new to agents, these are the concepts that unlock the whole code reading:
+For a developer new to agents, these are the concepts to know before reading any code:
 
 ### 2.1 Language model (LLM)
-The "brain" that understands and generates text. It has **no access to real-world data** by itself — it only converses. In this project it's **Groq** (`qwen/qwen3.8-27b`).
+The model that understands and generates text. It has **no access to real-world data** by itself, it only converses. In this project it's **Groq** (`qwen/qwen3.8-27b`).
 
 ### 2.2 Tool
 A function with a **name, description, and an input schema**. The model reads these descriptions and "decides" to call the tool when it deems necessary. E.g.: `get_weather(city)`.
@@ -56,9 +56,9 @@ A function with a **name, description, and an input schema**. The model reads th
 The mechanism by which the LLM, during response generation, emits a structured call like `{ tool: "get_weather", args: { city: "Tokyo" } }`. The code executes the real function, gets the result, and hands it back to the model, which then writes the final answer **based on** that result.
 
 ### 2.4 MCP — Model Context Protocol
-It's the **protocol** (an open standard, from Anthropic — the creators of Claude) that standardizes how an agent **discovers and calls tools** provided by an **external server**. It's like a "tool USB": an MCP server exposes tools; any MCP client can use them.
+It's the **protocol** (an open standard, from Anthropic, the creators of Claude) that standardizes how an agent **discovers and calls tools** provided by an **external server**. It works like a "tool USB": an MCP server exposes tools; any MCP client can use them.
 
-The big MCP advantage here: **the tools are not hardcoded in the frontend**. The client asks the server for the list of tools at runtime (`tools/list`) and builds executors on top of it. If tomorrow you add a new tool to the server, the frontend uses it automatically, without touching the frontend.
+The advantage of MCP here: **the tools are not hardcoded in the frontend**. The client asks the server for the list of tools at runtime (`tools/list`) and builds executors on top of it. If tomorrow you add a new tool to the server, the frontend uses it automatically, without touching the frontend.
 
 ### 2.5 AI SDK (Vercel)
 A library (from Vercel) that unifies access to many LLM providers (OpenAI, Anthropic, Groq, etc.) with a common API. Here we use:
@@ -105,7 +105,7 @@ The project has **two independent applications** + a script that runs them toget
 
 ## 4. Message flow
 
-Let's follow a real question, like *"What's the weather in Tokyo?"*:
+Follow a real question, like *"What's the weather in Tokyo?"*:
 
 1. **The user types** in the browser input field.
 2. The `useChat` hook (frontend) sends the question to `POST /api/agent`.
@@ -132,7 +132,7 @@ This is the server's entry point. It does, in order:
 
 1. **Reads environment configuration**: `MCP_SERVER_NAME` (exposed name), `PORT` (default 3000), `ALLOWED_HOSTS`.
 
-2. **`buildServer()`** — creates the `McpServer` instance (from `@modelcontextprotocol/server`) and **registers the 4 tools**. This is the heart of extensibility: to add a tool, just create a `registerXxxTool(server)` and call it here.
+2. **`buildServer()`** — creates the `McpServer` instance (from `@modelcontextprotocol/server`) and **registers the 4 tools**. This is where you add tools: create a `registerXxxTool(server)` and call it here.
 
 3. **`createMcpHandler(buildServer)`** — creates the handler that processes MCP protocol requests (list tools, call tools).
 
@@ -169,11 +169,11 @@ server.registerTool(
 
 Three important points about this pattern:
 
-- **The `description` is the "LLM manual".** The better it indicates *when to use it*, the better the model decides. The code is careful here (e.g., "Use this whenever the user asks about the weather").
+- **The `description` is the "LLM manual".** The better it indicates *when to use it*, the better the model decides. The code pays attention to this (e.g., "Use this whenever the user asks about the weather").
 - **The `inputSchema` (Zod)** validates the arguments the model sends. Zod also lets the AI SDK and MCP know the exact shape of the data.
 - **The executor returns formatted text** instead of raw JSON, because readable text is easier for the model to incorporate into the final answer.
 
-A consistent pattern across all tools for **errors**: if the internal function returns a string beginning with `"ERROR"`, the executor converts it into an **MCP error result** (`isError: true`), removing the prefix. This lets the error be handled and formatted without breaking the protocol.
+All tools handle **errors** the same way: if the internal function returns a string beginning with `"ERROR"`, the executor converts it into an **MCP error result** (`isError: true`), removing the prefix. This lets the error be handled and formatted without breaking the protocol.
 
 ### 5.3 Each tool in detail
 
@@ -202,7 +202,7 @@ A consistent pattern across all tools for **errors**: if the internal function r
 
 - **Use case:** "What is (15% of 4,800) + 120?"
 - **Input:** `expression` (1–200 chars).
-- **How it works:** uses **`mathjs`** to evaluate the expression, but with **a security layer**: an `ALLOWED_CHARS` regex only allows digits, operators `+-*/^()` `%`, spaces, comma/dot and lowercase letters. Anything outside is rejected **before** evaluating — this prevents code/malicious expression injection. It also validates that the result is a finite number.
+- **How it works:** uses **`mathjs`** to evaluate the expression, but with **a security layer**: an `ALLOWED_CHARS` regex only allows digits, operators `+-*/^()` `%`, spaces, comma/dot and lowercase letters. Anything outside is rejected **before** evaluating; this prevents code/malicious expression injection. It also validates that the result is a finite number.
 - **Formatting:** integers become plain strings; decimals are rounded to 6 places.
 
 #### 5.3.4 `get_github_user` (`server/src/tools/github.ts`)
@@ -221,7 +221,7 @@ This file is the **MCP client layer**. It has 3 functions:
 
 - **`connectMcp()`** — instantiates the MCP `Client` (`@modelcontextprotocol/client`), creates a `StreamableHTTPClientTransport` pointing to `MCP_SERVER_URL` (default `http://localhost:3000/mcp`) and connects. Throws an error if the server is unreachable (e.g., Render cold start).
 - **`closeMcp()`** — closes the session. First tries `terminateSession()` (a transport-specific function) then `client.close()`, both with silent `catch` (best-effort).
-- **`buildToolSet(client)`** — the key piece of "dynamic discovery":
+- **`buildToolSet(client)`** — the core of "dynamic discovery":
   1. Calls `client.listTools()`, which returns the server's MCP tools.
   2. For each tool, builds an **AI SDK ToolSet** entry with:
      - `description` (the MCP one, or a fallback);
@@ -229,7 +229,7 @@ This file is the **MCP client layer**. It has 3 functions:
      - `execute(args)` — calls `client.callTool()` on the MCP server, extracts text from the content blocks and, if `isError`, returns an error result.
   3. Joins everything into a `ToolSet` object with `Object.fromEntries`.
 
-It's thanks to this function that the frontend **has no tools hardcoded**: it discovers them on every request. This is the essence of MCP in the project.
+It's this function that keeps the frontend **with no tools hardcoded**: it discovers them on every request. That's the core point of MCP in this project.
 
 ### 6.2 `lib/prompts.ts`
 
@@ -239,11 +239,11 @@ Contains the **`SYSTEM_PROMPT`**, the agent's "instruction manual", sent to the 
 - **which tools exist** and what they're for;
 - **behavior rules**: prefer tools over guessing, call each tool at most once per step, never invent names/cities/numbers/facts, say when something isn't found, respond in the user's language, and keep answers **short (under 150 words, no markdown/emoji)**.
 
-This prompt most shapes the agent's "behavior" — editing it is the fastest way to change the bot's personality/rules.
+This prompt shapes the agent's "behavior" the most: editing it is the fastest way to change the bot's personality and rules.
 
 ### 6.3 The agent API — `app/api/agent/route.ts`
 
-This is the agent's "brain". It's a **POST** route in the Next.js App Router. Let's see what each part does:
+This is the agent's "brain". It's a **POST** route in the Next.js App Router. Here's what each part does:
 
 - **Route metadata (`runtime`, `dynamic`, `maxDuration`):** forces the Node.js runtime, guarantees it's rendered on every request (not cached), and limits execution to 60s.
 
@@ -325,7 +325,7 @@ Shows each tool invocation in a card:
 | `MCP_SERVER_URL` | `http://localhost:3000/mcp` | MCP server endpoint. |
 | `MODEL` | `qwen/qwen3.8-27b` | Model used by Groq. |
 
-> **Important:** the `GROQ_API_KEY` lives **only on the server** (a Next.js environment variable). It's never exposed to the browser — a security best practice (see [Section 11](#11-security-and-best-practices)).
+> **Important:** the `GROQ_API_KEY` lives **only on the server** (a Next.js environment variable). It's never exposed to the browser; this is a security best practice (see [Section 11](#11-security-and-best-practices)).
 
 ---
 
@@ -359,7 +359,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 - **Test the MCP server alone**: open `http://localhost:3000/` (info) and `http://localhost:3000/health`. You can also use an MCP client (e.g., MCP Inspector extension) at `http://localhost:3000/mcp`.
 - **Server logs**: the `console.error` in `listen` appears in the `server` terminal.
 - **Test the agent API**: `curl http://localhost:3001/api/health` for health.
-- **See tool calls**: in the UI, the `ToolCallCard`s show arguments and outputs — the best way to see what the model decided.
+- **See tool calls**: in the UI, the `ToolCallCard`s show arguments and outputs; the best way to see what the model decided.
 
 ---
 
@@ -369,7 +369,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 1. Push the repo to GitHub.
 2. **Render → New → Web Service**, connect the repo, **root directory** `server`, build `yarn && yarn build`, start `yarn start`.
 3. Add the `ALLOWED_HOSTS=<your-subdomain>.onrender.com` env var.
-4. The free tier "sleeps" after ~15 min of inactivity — the frontend handles the wake-up automatically.
+4. The free tier "sleeps" after ~15 min of inactivity; the frontend handles the wake-up automatically.
 
 ### Frontend → Vercel (Hobby, free)
 1. **Vercel → Add New → Project**, connect the repo, **root directory** `web`.
@@ -386,7 +386,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 | --- | --- |
 | **MCP for the tools** | Standardizes tool discovery/calling; frontend has no hardcoded tools; extensible without touching the client. |
 | **Two separate processes** (`server/` + `web/`) | Decouples the "tool provider" from the "agent". The same MCP server can serve several clients/agents. |
-| **Groq + `openai-compatible`** | Fast and **free** model, and Groq exposes an OpenAI-compatible API — the AI SDK already has a ready adapter. |
+| **Groq + `openai-compatible`** | Fast and **free** model, and Groq exposes an OpenAI-compatible API; the AI SDK already has a ready adapter. |
 | **AI SDK v7 (`streamText`)** | Abstracts providers and handles tool calling + streaming with a single API. |
 | **Rich tool descriptions** | The LLM decides by the description; good descriptions = good decisions. That's the agent's "quality". |
 | **Zod for schemas** | Safe input validation and clear declaration of shape, also converted into the JSON Schema consumed by MCP/AI SDK. |
@@ -401,7 +401,7 @@ cd web && yarn && yarn dev           # http://localhost:3001
 
 ## 11. Security and best practices
 
-1. **Never commit secrets.** Note that `web/.env.local` **contains a real Groq key** — it's in `.gitignore`, but it's worth **rotating** (generate a new one in the Groq console) since it was shown. Only commit `.env.example`.
+1. **Never commit secrets.** Note that `web/.env.local` **contains a real Groq key**; it's in `.gitignore`, but it's worth **rotating** (generate a new one in the Groq console) since it was shown. Only commit `.env.example`.
 2. **Secrets only on the server.** The `GROQ_API_KEY` is read via `process.env` in the Next.js code (server-side) and is **not** used on the client. Don't expose keys via `NEXT_PUBLIC_*` variables.
 3. **Input validation.** Zod validates every tool's arguments; `calculate` also applies a regex whitelist to prevent code injection into `mathjs`.
 4. **DNS rebinding protection.** `ALLOWED_HOSTS` restricts which `Host` headers the server accepts. When publishing, update it to include your real domain.
@@ -427,16 +427,16 @@ Copy the `server/` and `web/` folder structure. Install dependencies with `yarn`
 3. Register with `server.registerTool('my_tool', { description, inputSchema }, handler)`.
 4. Import and call the `register` in `buildServer()` in `index.ts`.
 
-**Golden rule:** write the `description` as if instructing someone how to use it — "Use this when the user asks about X". This defines your agent's accuracy. Define the `inputSchema` with Zod using `min`/`max`/`.describe()` for clarity.
+**Golden rule:** write the `description` as if instructing someone how to use it, like "Use this when the user asks about X". This defines your agent's accuracy. Define the `inputSchema` with Zod using `min`/`max`/`.describe()` for clarity.
 
 ### Step 3 — (Optional) New tools appear by themselves
-Since the frontend discovers tools via `tools/list`, **your new tools already work in the chat without touching the frontend** (the `ToolCallCard` will show the raw name if it's not in the label map — add it there for a nice label).
+Since the frontend discovers tools via `tools/list`, **your new tools already work in the chat without touching the frontend** (the `ToolCallCard` will show the raw name if it's not in the label map; add it there for a nice label).
 
 ### Step 4 — Tweak the system prompt
 In `web/lib/prompts.ts`, list your tools and define your agent's rules (language, format, limits, personality).
 
 ### Step 5 — Test
-Run `./dev.sh`, use the starters / converse, and observe the `ToolCallCard`s to see which tools the model chose and with which arguments. Adjust the `description`s based on observed behavior — **prompt + descriptions are the agent's "tuning"**.
+Run `./dev.sh`, use the starters / converse, and observe the `ToolCallCard`s to see which tools the model chose and with which arguments. Adjust the `description`s based on observed behavior; **prompt + descriptions are the agent's "tuning"**.
 
 ### Step 6 — Change the model (optional)
 Change `MODEL` in `.env.local`, or switch providers by editing `createOpenAICompatible`/adapter in `web/app/api/agent/route.ts` (the AI SDK supports OpenAI, Anthropic, Google, etc.).
@@ -450,7 +450,7 @@ Change `MODEL` in `.env.local`, or switch providers by editing `createOpenAIComp
 - **Conversation persistence** (save messages in a database).
 - **Authentication** (each user has their own session).
 - **New data sources** (SQL, paid APIs, webhooks).
-- **Writing/action tools** (create files, send emails, schedule) — always with **human approval** for destructive actions.
+- **Writing/action tools** (create files, send emails, schedule); always with **human approval** for destructive actions.
 - **Queue/retry** for LLM rate limits.
 - **Multiple MCP clients** (connect to several MCP servers at once).
 

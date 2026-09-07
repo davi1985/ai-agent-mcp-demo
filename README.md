@@ -1,12 +1,12 @@
-# MCP Agent — Conversational AI Portfolio Demo
+# MCP Agent — AI Chatbot Portfolio Demo
 
-A **conversational AI agent** built with **TypeScript and React** that discovers and calls tools at **runtime** through the **Model Context Protocol** (MCP). The user asks questions in natural language (weather, math, GitHub profiles, web search) and the model calls real tools — displayed live in the interface.
+An **AI chatbot** built with **TypeScript and React** that discovers and calls tools at **runtime** through the **Model Context Protocol** (MCP). The user asks questions in natural language (weather, math, GitHub profiles, web search) and the model calls real tools, displayed live in the interface.
 
 Built with a **zero-cost** stack: all services have free tiers and **no credit card** is required.
 
 ![Stack](https://img.shields.io/badge/stack-TypeScript%20%2B%20React%20%2B%20Next.js%20%2B%20MCP%20%2B%20AI%20SDK-7c5cff)
 
-> **📚 Full documentation:** this README is a summary. For the complete, didactic guide to the entire implementation — including how to build **your own agent** — see [`docs/pt.md`](./docs/pt.md) (Portuguese) or [`docs/en.md`](./docs/en.md) (English).
+> **📚 Full documentation:** this README is a summary. For the complete guide to the entire implementation, including how to build **your own agent**, see [`docs/pt.md`](./docs/pt.md) (Portuguese) or [`docs/en.md`](./docs/en.md) (English).
 
 ---
 
@@ -19,10 +19,10 @@ Built with a **zero-cost** stack: all services have free tiers and **no credit c
 | "Calculate: (15% of 4,800) + 120" | `calculate` (mathjs sandbox) |
 | "Show the GitHub profile of openai" | `get_github_user` (GitHub public API) |
 
-- **Dynamic tools**: the MCP client lists tools from the server each session and converts them into AI SDK tool executors — no tool is "hardcoded" in the frontend.
+- **Dynamic tools**: the MCP client lists tools from the server each session and converts them into AI SDK tool executors, so no tool is "hardcoded" in the frontend.
 - **Real-time streaming**: tool call cards appear with a spinner while the model uses the tool, and the final answer streams token by token.
 - **Cold-start tolerant**: the MCP server runs on Render's free tier and sleeps when idle; the frontend detects this and shows a "waking up…" banner with auto-retry.
-- **$0 cost**: Groq (LLM), Open-Meteo, Wikipedia, GitHub, Vercel Hobby, Render free — no credit card.
+- **$0 cost**: Groq (LLM), Open-Meteo, Wikipedia, GitHub, Vercel Hobby, Render free; no credit card.
 
 ---
 
@@ -53,7 +53,7 @@ Browser (React / Next.js)
 
 ### Prerequisites
 - Node.js 20+ (tested with v24.19.0)
-- A **free Groq API key** ([console.groq.com](https://console.groq.com) — no credit card)
+- A **free Groq API key** ([console.groq.com](https://console.groq.com), no credit card)
 
 ### One command (recommended)
 
@@ -92,7 +92,7 @@ The default model is `qwen/qwen3.8-27b`. You can change it via the `MODEL` envir
 1. Push this repo to GitHub.
 2. **Render → New → Web Service**, connect the repo, root directory `server`, build command `yarn && yarn build`, start command `yarn start`.
 3. Add environment variable: `ALLOWED_HOSTS=<your-subdomain>.onrender.com`.
-4. The free tier sleeps after ~15 min of inactivity — the frontend handles this automatically.
+4. The free tier sleeps after ~15 min of inactivity; the frontend handles this automatically.
 
 ### Frontend → Vercel (Hobby)
 
@@ -153,4 +153,4 @@ ai-agent-mcp-demo/
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+MIT, see [LICENSE](./LICENSE).
