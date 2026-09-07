@@ -1,0 +1,30 @@
+{
+  "name": "mcp-agent-server",
+  "version": "1.0.0",
+  "description": "MCP server exposing weather, web search, calculator and GitHub tools",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "PORT=3000 tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/express": "^2.0.0",
+    "@modelcontextprotocol/node": "^2.0.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "express": "^5.2.1",
+    "mathjs": "^15.2.0",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.4.1",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
