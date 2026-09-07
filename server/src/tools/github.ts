@@ -61,7 +61,12 @@ const fetchJson = async <T>(
   })
   if (res.status === 404) return { ok: false, status: 404 }
   if (!res.ok) return { ok: false, status: res.status }
-  return { ok: true, status: res.status, data: (await res.json()) as T }
+
+  return {
+    ok: true,
+    status: res.status,
+    data: (await res.json()) as T,
+  }
 }
 
 const fetchGithubUser = async (username: string): Promise<string> => {
@@ -93,9 +98,12 @@ const fetchGithubUser = async (username: string): Promise<string> => {
     const repos = await fetchJson<RepoJson[]>(
       `${GITHUB_API}/users/${encodeURIComponent(username)}/repos?sort=updated&per_page=5`,
     )
+
     if (repos.ok && repos.data && repos.data.length > 0) {
+      const { data } = repos
       lines.push('', 'Recently updated repositories:')
-      for (const repo of repos.data.slice(0, 5)) {
+
+      for (const repo of data.slice(0, 5)) {
         const stars =
           repo.stargazers_count > 0 ? ` (${repo.stargazers_count}★)` : ''
         const desc = repo.description ? ` — ${repo.description}` : ''

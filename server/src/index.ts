@@ -14,7 +14,7 @@ const ALLOWED_HOSTS = (process.env.ALLOWED_HOSTS ?? 'localhost,127.0.0.1')
   .map((h) => h.trim())
   .filter(Boolean)
 
-function buildServer(): McpServer {
+const buildServer = (): McpServer => {
   const server = new McpServer({ name: SERVER_NAME, version: VERSION })
   registerWeatherTool(server)
   registerSearchTool(server)
@@ -60,7 +60,7 @@ app.listen(PORT, '0.0.0.0', () => {
   )
 })
 
-function reqHostBase(_res: object): string {
+const reqHostBase = (_res: object): string => {
   const host = process.env.PUBLIC_URL ?? `http://localhost:${PORT}`
   return host.replace(/\/$/, '')
 }

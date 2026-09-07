@@ -9,7 +9,7 @@ type ProbeState = 'checking' | 'ok' | 'waking'
  * the server sleeps after ~15 min idle and takes ~30–60s (cold start) to
  * wake up — this banner makes that failure mode explicit instead of confusing.
  */
-export default function ServerStatus() {
+export const ServerStatus = () => {
   const [state, setState] = useState<ProbeState>('checking')
   const [detail, setDetail] = useState('')
 

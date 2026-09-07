@@ -24,14 +24,18 @@ const groq = createOpenAICompatible({
   apiKey: GROQ_API_KEY,
 })
 
-export async function POST(req: Request) {
+export const POST = async (req: Request) => {
   const { messages }: { messages: UIMessage[] } = await req.json()
 
   if (!messages.some((m) => m.role === 'user')) {
-    return NextResponse.json({ error: 'No user message provided.' }, { status: 400 })
+    return NextResponse.json(
+      { error: 'No user message provided.' },
+      { status: 400 },
+    )
   }
 
   let client
+
   try {
     client = await connectMcp()
   } catch (err) {
@@ -60,9 +64,7 @@ export async function POST(req: Request) {
       ),
       tools,
       stopWhen: isStepCount(8),
-      onFinish: () => {
-        void closeMcp(client)
-      },
+      onFinish: () => void closeMcp(client),
     })
 
     return createUIMessageStreamResponse({

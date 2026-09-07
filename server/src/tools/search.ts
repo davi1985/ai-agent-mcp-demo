@@ -10,7 +10,7 @@ const WIKI_API = 'https://en.wikipedia.org/w/api.php'
 const WIKI_USER_AGENT =
   'mcp-agent-demo/1.0 (portfolio project; contact: github)'
 
-export function registerSearchTool(server: McpServer): void {
+export const registerSearchTool = (server: McpServer): void => {
   server.registerTool(
     'web_search',
     {
@@ -36,14 +36,14 @@ export function registerSearchTool(server: McpServer): void {
   )
 }
 
-function formatResult(hit: SearchHit, index: number): string {
+const formatResult = (hit: SearchHit, index: number): string => {
   const title = hit.title.replace(/[\s-]+$/g, '').trim()
   const url = `https://en.wikipedia.org/wiki/${title.replace(/ /g, '_')}`
   const snippet = (hit.snippet ?? '').replace(/<[^>]+>/g, '').trim()
   return `${index}. ${title}\n   ${url}\n   ${snippet}`
 }
 
-async function searchWeb(query: string, limit: number): Promise<string> {
+const searchWeb = async (query: string, limit: number): Promise<string> => {
   try {
     const params = new URLSearchParams({
       action: 'query',
@@ -53,13 +53,16 @@ async function searchWeb(query: string, limit: number): Promise<string> {
       srlimit: String(limit),
       origin: '*',
     })
+
     const res = await fetch(`${WIKI_API}?${params}`, {
       headers: { 'User-Agent': WIKI_USER_AGENT },
     })
+
     if (!res.ok) return `ERROR Search failed (HTTP ${res.status}).`
 
     const json = (await res.json()) as { query?: { search?: SearchHit[] } }
     const hits = json.query?.search ?? []
+
     if (hits.length === 0) {
       return `No web results found for "${query}".`
     }

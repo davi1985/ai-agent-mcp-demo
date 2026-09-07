@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import ServerStatus from './ServerStatus'
-import ToolCallCard from './ToolCallCard'
+import { ServerStatus } from './ServerStatus'
+import { ToolCallCard } from './ToolCallCard'
 
 const STARTERS = [
   {
@@ -34,7 +34,7 @@ type DynamicToolPart = {
   errorText?: string
 }
 
-function renderPart(part: unknown, index: number) {
+const renderPart = (part: unknown, index: number) => {
   const type = (part as { type: string }).type
 
   switch (type) {
@@ -85,7 +85,7 @@ function renderPart(part: unknown, index: number) {
   }
 }
 
-export default function ChatInterface() {
+export const ChatInterface = () => {
   const { messages, sendMessage, error, stop, status } = useChat({
     transport: new DefaultChatTransport({ api: '/api/agent' }),
   })

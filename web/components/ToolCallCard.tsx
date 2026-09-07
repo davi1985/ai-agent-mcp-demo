@@ -24,13 +24,13 @@ const TOOL_LABELS: Record<string, string> = {
   get_github_user: 'GitHub profile',
 }
 
-export default function ToolCallCard({
+export const ToolCallCard = ({
   toolName,
   state,
   input,
   output,
   errorText,
-}: ToolCallCardProps) {
+}: ToolCallCardProps) => {
   const pending = state === 'input-streaming' || state === 'input-available'
   const label = TOOL_LABELS[toolName] ?? toolName
 

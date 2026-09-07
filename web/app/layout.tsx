@@ -7,14 +7,12 @@ export const metadata: Metadata = {
     'A conversational AI agent built with TypeScript and React that discovers and calls tools dynamically over the Model Context Protocol.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <html lang="en">
       <body>{children}</body>
     </html>
   )
 }
+
+export default RootLayout

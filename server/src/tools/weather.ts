@@ -53,7 +53,7 @@ interface WeatherJson {
   }
 }
 
-export function registerWeatherTool(server: McpServer): void {
+export const registerWeatherTool = (server: McpServer): void => {
   server.registerTool(
     'get_weather',
     {
@@ -78,7 +78,10 @@ export function registerWeatherTool(server: McpServer): void {
   )
 }
 
-async function fetchWeather(city: string, country?: string): Promise<string> {
+const fetchWeather = async (
+  city: string,
+  country?: string,
+): Promise<string> => {
   try {
     const params = new URLSearchParams({
       name: city,
@@ -89,22 +92,25 @@ async function fetchWeather(city: string, country?: string): Promise<string> {
     const geoRes = await fetch(`${GEOCODING_URL}?${params}`, {
       headers: { 'User-Agent': 'mcp-agent-demo/1.0' },
     })
+
     if (!geoRes.ok)
       return `ERROR Weather lookup failed (HTTP ${geoRes.status}).`
 
     const geoJson = (await geoRes.json()) as { results?: GeoResult[] }
     const results = geoJson.results ?? []
     const normalize = (s: string) =>
-      s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+      s
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
 
     const requested = normalize(city)
 
-    const match =
-      results.find(
-        (r) =>
-          normalize(r.name) === requested &&
-          (!country || r.country?.toLowerCase().includes(country.toLowerCase())),
-      )
+    const match = results.find(
+      (r) =>
+        normalize(r.name) === requested &&
+        (!country || r.country?.toLowerCase().includes(country.toLowerCase())),
+    )
 
     if (!match)
       return `ERROR City "${city}"${country ? ` in ${country}` : ''} not found. Please check the spelling.`
@@ -122,6 +128,7 @@ async function fetchWeather(city: string, country?: string): Promise<string> {
     const forecastRes = await fetch(`${FORECAST_URL}?${forecastParams}`, {
       headers: { 'User-Agent': 'mcp-agent-demo/1.0' },
     })
+
     if (!forecastRes.ok)
       return `ERROR Weather forecast failed (HTTP ${forecastRes.status}).`
 
